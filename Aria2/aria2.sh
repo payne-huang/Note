@@ -1,12 +1,13 @@
 #!/bin/bash
 
-cores=`grep "^processor" /proc/cpuinfo |wc -l`
-[ -n "$cores" ] || cores=1
+cores=`grep "^processor" /proc/cpuinfo 2>/dev/null |wc -l`
+[ -n "$cores" ] && [ "$cores" -gt 0 ] || cores=1
 
+CA="${2:-}"
+BUILD_DIRECTORY="${1:-/tmp}"
+PREFIX="$BUILD_DIRECTORY/aria2_build"
 C_COMPILER="gcc"
 CXX_COMPILER="g++"
-BUILD_DIRECTORY="/tmp"
-PREFIX="$BUILD_DIRECTORY/aria2_build"
 
 DOWNLOADER() {
   [ "$#" -eq 2 ] || return
@@ -17,8 +18,10 @@ DOWNLOADER() {
 
 MOD() {
  [ "$#" -eq 5 ] || return
+ sed --version >/dev/null 2>&1
+ [ $? -eq 0 ] && ext="" || ext=".bak"
  n=`grep -on "$2" "$1" |cut -d':' -f1`
- sed -i "$(($n+$3))s/$4/$5/" "$1"
+ sed -i "$ext" "$(($n+$3))s/$4/$5/" "$1"
 }
 
 ## DEPENDENCES ##
@@ -100,6 +103,8 @@ MOD "src/OptionHandlerFactory.cc" "PREF_SUMMARY_INTERVAL" "0" '"60",' '"0",'
 MOD "src/OptionHandlerFactory.cc" "PREF_FILE_ALLOCATION" "0" 'V_PREALLOC,' '\n#ifdef HAVE_SOME_FALLOCATE\nV_FALLOC\n#else\nV_PREALLOC\n#endif \/\/ HAVE_SOME_FALLOCATE\n,\n'
 
 # aria2 build
+[ ! -n "$CA" ] && [ -f "/etc/ssl/certs/ca-certificates.crt" ] && CA="/etc/ssl/certs/ca-certificates.crt"
+[ ! -n "$CA" ] && [ -f "/usr/local/share/ca-certificates/cacert.pem" ] && CA="/usr/local/share/ca-certificates/cacert.pem"
 PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig/" \
 LD_LIBRARY_PATH="$PREFIX/lib/" \
 CC="$C_COMPILER" \
@@ -114,7 +119,7 @@ CXX="$CXX_COMPILER" \
     --with-openssl \
     --with-libssh2 \
     --with-sqlite3 \
-    --with-ca-bundle="/etc/ssl/certs/ca-certificates.crt" \
+    --with-ca-bundle="$CA" \
     --enable-shared=no \
     ARIA2_STATIC=yes
 make -j $cores && make install || exit 1

@@ -1,6 +1,7 @@
 # MacOS
 ```
-bash <(curl -sSL "https://raw.githubusercontent.com/MoeClub/Note/master/AnyConnect/mac.sh") <CERT_URL> <CERT_PWD>
+curl -sSL "https://raw.githubusercontent.com/MoeClub/Note/master/AnyConnect/mac.sh" |bash -s <CERT_URL> <CERT_PWD>
+
 ```
 
 # iOS
@@ -13,15 +14,48 @@ anyconnect://connect/?name=<NAME>&onsuccess=anyconnect%3A%2F%2Fclose&onerror=any
 anyconnect://disconnect/?onsuccess=anyconnect%3A%2F%2Fclose&onerror=anyconnect%3A%2F%2Fclose
 ```
 
+# Preferences
+```
+# profile.xml
+## windows: %ProgramData%\Cisco\Cisco AnyConnect Secure Mobility Client\Profile\profile.xml
+## mac/linux: /opt/cisco/anyconnect/profile/profile.xml
+
+# preferences_global.xml
+## windows: %ProgramData%\Cisco\Cisco AnyConnect Secure Mobility Client\preferences_global.xml
+## mac/linux: /opt/cisco/anyconnect/.anyconnect_global
+
+# preferences.xml
+## windows: %LocalAppData%\Cisco\Cisco AnyConnect Secure Mobility Client\preferences.xml
+## mac/linux: $Home/.anyconnect
+
+```
+
 # 端口转发
 ```
 iptables -t nat -A PREROUTING -d <本机地址> -p tcp --dport <本机端口> -j DNAT --to-destination <远程地址>:<远程端口> 
 iptables -t nat -I POSTROUTING -d <远程地址> -p tcp --dport <远程端口> -j MASQUERADE
 ```
 
-# ocserv.deb (Debian x64/ARM64 8+ / Ubuntu x64/ARM64 14+)
+# ocserv.deb [ Debian 10+ / Ubuntu 18+ ] (AMD64/ARM64)
 ```
 wget --no-check-certificate --no-cache -4 -qO /tmp/ocserv.deb "https://raw.githubusercontent.com/MoeClub/Note/master/AnyConnect/ocserv.deb" && dpkg -i /tmp/ocserv.deb
+
+```
+
+# docker
+```
+docker build -t ocserv:latest ./DockerFile; 
+
+docker run --name ocserv --env PASSWD=-Test:TestPwd:NoRoute --env CERT=<CERT_URL> --env KEY=<KEY_URL> --env CA=<CA_URL> --privileged -p 443:443 -d <ImageID> 
+
+docker rm -f ocserv
+
+
+--env CA=<URL>         # 用于证书登陆
+--env PASSWD=<STRING>  # 用于用户名密码登陆
+--env DNS=<URL>        # 用于dnsmasq域名解析优化
+--env CERT=<URL>       # 用于域名证书
+--env KEY=<URL> 
 
 ```
 
@@ -42,7 +76,7 @@ bash /etc/ocserv/template/client.sh -o <OrgName> -g <GroupName> -p <PASSWORD>
 
 ```
 
-# ocserv.sh (Debian x64 8+ / CentOS 6+ / Ubuntu 14+)
+# ocserv.sh Debian x64 8+ / CentOS 6+ / Ubuntu 14+)
 ```
 bash <(wget --no-check-certificate --no-cache -4 -qO- "https://raw.githubusercontent.com/MoeClub/Note/master/AnyConnect/ocserv.sh")
 ```
